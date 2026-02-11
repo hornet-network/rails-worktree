@@ -146,20 +146,32 @@ module RailsWorktree
         end
       end
 
+      def database_env
+        {
+          "DATABASE_NAME_DEVELOPMENT" => @dev_database_name,
+          "DATABASE_NAME_TEST" => @test_database_name
+        }
+      end
+
       def setup_database
-        puts "Creating databases..."
-        system("RAILS_ENV=development bin/rails db:create") || puts("Warning: Could not create development database")
-        system("RAILS_ENV=test bin/rails db:create") || puts("Warning: Could not create test database")
-
-        puts "Running migrations..."
-        system("RAILS_ENV=development bin/rails db:migrate") || puts("Warning: Could not run migrations")
-        system("RAILS_ENV=test bin/rails db:migrate") || puts("Warning: Could not run test migrations")
-
-        unless @skip_seeds
-          puts "Seeding development database..."
-          system("RAILS_ENV=development bin/rails db:seed > /dev/null 2>&1") || puts("Warning: Could not seed database")
+        if File.executable?("bin/setup")
+          puts "Running bin/setup..."
+          system(database_env, "bin/setup") || puts("Warning: bin/setup failed")
         else
-          puts "Skipping database seeding..."
+          puts "Creating databases..."
+          system(database_env.merge("RAILS_ENV" => "development"), "bin/rails", "db:create") || puts("Warning: Could not create development database")
+          system(database_env.merge("RAILS_ENV" => "test"), "bin/rails", "db:create") || puts("Warning: Could not create test database")
+
+          puts "Running migrations..."
+          system(database_env.merge("RAILS_ENV" => "development"), "bin/rails", "db:migrate") || puts("Warning: Could not run migrations")
+          system(database_env.merge("RAILS_ENV" => "test"), "bin/rails", "db:migrate") || puts("Warning: Could not run test migrations")
+
+          unless @skip_seeds
+            puts "Seeding development database..."
+            system(database_env.merge("RAILS_ENV" => "development"), "bin/rails", "db:seed") || puts("Warning: Could not seed database")
+          else
+            puts "Skipping database seeding..."
+          end
         end
       end
     end

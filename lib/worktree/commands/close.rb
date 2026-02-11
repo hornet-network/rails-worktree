@@ -80,16 +80,23 @@ module RailsWorktree
         end
       end
 
+      def database_env
+        {
+          "DATABASE_NAME_DEVELOPMENT" => @dev_database_name,
+          "DATABASE_NAME_TEST" => @test_database_name
+        }
+      end
+
       def drop_databases
         puts "Dropping databases..."
 
         Dir.chdir(@worktree_dir) do
           # Drop development database
-          system("RAILS_ENV=development bin/rails db:drop 2>/dev/null") ||
+          system(database_env.merge("RAILS_ENV" => "development", "DISABLE_DATABASE_ENVIRONMENT_CHECK" => "1"), "bin/rails", "db:drop") ||
             puts("Warning: Could not drop development database #{@dev_database_name}")
 
           # Drop test database
-          system("RAILS_ENV=test bin/rails db:drop 2>/dev/null") ||
+          system(database_env.merge("RAILS_ENV" => "test", "DISABLE_DATABASE_ENVIRONMENT_CHECK" => "1"), "bin/rails", "db:drop") ||
             puts("Warning: Could not drop test database #{@test_database_name}")
         end
       end
