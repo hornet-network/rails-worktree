@@ -1,6 +1,8 @@
+require_relative "lib/worktree/version"
+
 Gem::Specification.new do |spec|
   spec.name          = "rails-worktree"
-  spec.version       = "0.1.4"
+  spec.version       = RailsWorktree::VERSION
   spec.authors       = ["Martin Ulleberg"]
   spec.email         = ["martin@fasttravel.com"]
 
