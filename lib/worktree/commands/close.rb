@@ -22,6 +22,9 @@ module RailsWorktree
         puts "Main worktree: #{@main_worktree}"
         puts ""
 
+        # Move to main worktree early so we're not inside the directory we're about to delete
+        Dir.chdir(@main_worktree) unless @in_main_repo
+
         drop_databases
         remove_node_modules
         remove_worktree
@@ -34,6 +37,11 @@ module RailsWorktree
         puts "  node_modules removed"
         puts "  Worktree removed from #{@worktree_path}"
         puts "  Branch #{@worktree_name} deleted"
+
+        unless @in_main_repo
+          puts ""
+          puts "Run: cd #{@main_worktree}"
+        end
       end
 
       private
@@ -80,24 +88,19 @@ module RailsWorktree
         end
       end
 
-      def database_env
-        {
-          "DATABASE_NAME_DEVELOPMENT" => @dev_database_name,
-          "DATABASE_NAME_TEST" => @test_database_name
-        }
-      end
-
       def drop_databases
         puts "Dropping databases..."
 
-        Dir.chdir(@worktree_dir) do
-          # Drop development database
-          system(database_env.merge("RAILS_ENV" => "development", "DISABLE_DATABASE_ENVIRONMENT_CHECK" => "1"), "bin/rails", "db:drop") ||
-            puts("Warning: Could not drop development database #{@dev_database_name}")
+        if system("dropdb", "--if-exists", @dev_database_name)
+          puts "Dropped database '#{@dev_database_name}'"
+        else
+          puts "Warning: Could not drop development database #{@dev_database_name}"
+        end
 
-          # Drop test database
-          system(database_env.merge("RAILS_ENV" => "test", "DISABLE_DATABASE_ENVIRONMENT_CHECK" => "1"), "bin/rails", "db:drop") ||
-            puts("Warning: Could not drop test database #{@test_database_name}")
+        if system("dropdb", "--if-exists", @test_database_name)
+          puts "Dropped database '#{@test_database_name}'"
+        else
+          puts "Warning: Could not drop test database #{@test_database_name}"
         end
       end
 
@@ -115,9 +118,6 @@ module RailsWorktree
 
       def remove_worktree
         puts "Removing worktree..."
-
-        # Change back to main repo if needed
-        Dir.chdir(@main_worktree) unless @in_main_repo
 
         if system("git worktree remove #{@worktree_path} --force 2>/dev/null")
           puts "Worktree removed successfully via git"

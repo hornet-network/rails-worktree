@@ -112,25 +112,13 @@ module RailsWorktree
 
         content = File.read(database_yml)
 
-        # Update development database
-        content.gsub!(
-          /database:\s*<%= ENV\.fetch\("DATABASE_NAME",\s*"#{@db_prefix}_development"\s*%>/,
-          "database: <%= ENV.fetch(\"DATABASE_NAME_DEVELOPMENT\", \"#{@db_prefix}_development\") %>"
-        )
-        content.gsub!(
-          /database:\s*#{@db_prefix}_development/,
-          "database: <%= ENV.fetch(\"DATABASE_NAME_DEVELOPMENT\", \"#{@db_prefix}_development\") %>"
-        )
+        # Replace original database names with worktree-specific ones wherever they appear
+        # This handles hardcoded names, ERB defaults, env var defaults, etc.
+        original_dev = "#{@db_prefix}_development"
+        original_test = "#{@db_prefix}_test"
 
-        # Update test database
-        content.gsub!(
-          /database:\s*<%= ENV\.fetch\("DATABASE_NAME",\s*"#{@db_prefix}_test"\s*%>/,
-          "database: <%= ENV.fetch(\"DATABASE_NAME_TEST\", \"#{@db_prefix}_test\") %>"
-        )
-        content.gsub!(
-          /database:\s*#{@db_prefix}_test/,
-          "database: <%= ENV.fetch(\"DATABASE_NAME_TEST\", \"#{@db_prefix}_test\") %>"
-        )
+        content.gsub!(original_dev, @dev_database_name)
+        content.gsub!(original_test, @test_database_name)
 
         File.write(database_yml, content)
       end
