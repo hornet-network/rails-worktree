@@ -65,7 +65,8 @@ module RailsWorktree
           ".env",
           "config/database.yml",
           "Procfile.dev",
-          "config/credentials/development.key"
+          "config/credentials/development.key",
+          "config/credentials/test.key"
         ]
 
         files_to_copy.each do |file|
